@@ -1,0 +1,33 @@
+{
+  "name": "tjargon",
+  "type": "module",
+  "version": "1.0.8",
+  "description": "A CLI tech jargon generator designed to look cool.",
+  "scripts": {
+    "test": "tsc && node dist/index.js",
+    "build": "tsc && echo 'build successful.'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mennymendoza/tjargon.git"
+  },
+  "author": "Juan Mendoza",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mennymendoza/tjargon/issues"
+  },
+  "homepage": "https://github.com/mennymendoza/tjargon#readme",
+  "bin": {
+    "tjargon": "dist/index.js"
+  },
+  "devDependencies": {
+    "@types/argparse": "^2.0.16",
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/sqlite3": "^3.1.11",
+    "typescript": "^5.6.2"
+  },
+  "dependencies": {
+    "argparse": "^2.0.1",
+    "better-sqlite3": "^11.3.0"
+  }
+}
