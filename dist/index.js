@@ -79,11 +79,6 @@ function getWords(tableName) {
     return values;
 }
 class Generator {
-    nouns;
-    verbs;
-    adjectives;
-    // Configs
-    LINES;
     constructor() {
         this.nouns = getWords("tech_nouns");
         this.verbs = getWords("tech_verbs");
