@@ -1,7 +1,7 @@
 {
   "name": "tjargon",
   "type": "module",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "A CLI tech jargon generator designed to look cool.",
   "scripts": {
     "test": "tsc && node dist/index.js",
