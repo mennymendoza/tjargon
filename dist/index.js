@@ -138,4 +138,4 @@ class Generator {
     }
 }
 const generator = new Generator();
-await generator.outputTechJargon();
+generator.outputTechJargon();
