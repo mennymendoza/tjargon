@@ -2,7 +2,8 @@
 
 import { loadWords } from './load.js';
 import { freeze, randNum, toVariableName } from './util.js';
-import argparse from 'argparse';
+import yargs from 'yargs'
+import { hideBin } from 'yargs/helpers';
 
 // Time Delays
 const MIN_MAIN_DELAY = 1;
@@ -47,13 +48,17 @@ function generateRandomHex(numDigits: number) {
     return resultString;
 }
 
+function randColor(): string {
+    return CODES[randNum(CODES.length)]!
+}
+
 function colorStringRandom(text: string) {
-    return CODES[randNum(CODES.length)] + text + "\x1b[0m";
+    return randColor() + text + "\x1b[0m";
 }
 
 async function printLoadingBar() {
     const loadingLength = MIN_LOAD_LEN + randNum(MAX_LOAD_LEN - MIN_LOAD_LEN + 1);
-    process.stdout.write(CODES[randNum(CODES.length)] + LOADOPTS[randNum(LOADOPTS.length)] + ': [');
+    process.stdout.write(randColor() + LOADOPTS[randNum(LOADOPTS.length)] + ': [');
     const freezeTime = MIN_LOAD_DELAY + randNum(MAX_LOAD_DELAY - MIN_LOAD_DELAY + 1);
     for (let i = 0; i < loadingLength; i++) {
         process.stdout.write(LOADING_CHAR);
@@ -93,25 +98,30 @@ class Generator {
     LINES: number
 
     constructor() {
-        [this.nouns, this.verbs, this.adjectives] = loadWords()
+        const {nouns, verbs, adjectives} = loadWords()
 
-        const parser = new argparse.ArgumentParser({ description: 'Generate tech jargon.' });
+        this.nouns = nouns;
+        this.verbs = verbs;
+        this.adjectives = adjectives;
 
-        parser.add_argument('--lines', {
-            metavar: 'LINES',
-            type: 'int',
-            help: 'Number of lines to generate',
-            default: 1000,
-            required: false
-        });
+        const argv = yargs(hideBin(process.argv))
+            .options({
+                l: {
+                    type: 'number',
+                    default: 1000,
+                    alias: 'lines',
+                    describe: 'Number of lines to generate'
+                },
+            })
+            .help('h')
+            .alias('h', 'help')
+            .parseSync();
 
-        const args = parser.parse_args();
-
-        this.LINES = args.lines;
+        this.LINES = argv.l;
     }
 
     generateTechJargon(): string {
-        const outerColor = CODES[randNum(CODES.length)];
+        const outerColor = randColor();
         let returnString = this.adjectives[randNum(this.adjectives.length)] + " " + this.nouns[randNum(this.nouns.length)];
         if (Math.random() < CODE_PROB) {
             returnString = outerColor + this.verbs[randNum(this.verbs.length)] + " \x1b[0m" + colorStringRandom(toVariableName(returnString)) + outerColor + TRANSITIONS[randNum(TRANSITIONS.length)] + "\x1b[0m";

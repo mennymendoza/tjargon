@@ -6,7 +6,13 @@ interface TechWord {
     value: string
 }
 
-export function loadWords(): string[][] {
+interface TechLists {
+    nouns: string[]
+    verbs: string[]
+    adjectives: string[]
+}
+
+export function loadWords(): TechLists {
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = dirname(__filename);
 
@@ -20,5 +26,9 @@ export function loadWords(): string[][] {
     const adjList = adjectives.map((obj) => obj.value)
 
     db.close();
-    return [nounsList, verbsList, adjList];
+    return {
+        nouns: nounsList,
+        verbs: verbsList,
+        adjectives: adjList
+    };
 }
