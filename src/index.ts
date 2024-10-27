@@ -1,9 +1,8 @@
 #!/usr/bin/env node
 // Tech Jargon Generator
 
-import Database from 'better-sqlite3';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
+import { loadWords } from './load.js';
+import { freeze, randNum, toVariableName } from './util.js';
 import argparse from 'argparse';
 
 // CONSTANTS
@@ -37,38 +36,11 @@ const HEX_BYTE_LENGTH = 4; // Number of characters that is printed out per byte 
 const MEM_ADDRESS_LENGTH = 8; // Number of characters that the memory address is in the output before hex table
 const LOADING_CHAR = "#"; // Character used to fill in the loading bar.
 
-/*
-All color codes (for reference):
-\[\033[0;30m\] # Black
-\[\033[0;31m\] # Red
-\[\033[0;32m\] # Green
-\[\033[0;33m\] # Yellow
-\[\033[0;34m\] # Blue
-\[\033[0;35m\] # Purple
-\[\033[0;36m\] # Cyan
-\[\033[0;37m\] # White
-*/
-
 // Random Text Generation Options
 const CODES = ["\x1b[0m", "\x1b[31m", "\x1b[33m", "\x1b[34m", "\x1b[36m", "\x1b[37m"];
 const TRANSITIONS = [': \x1b[1;32m== task complete ==\x1b[0m', ' =>', ' ==>', ';', '...', '.', ' ->', ':', ' ::', ' |', ' ~'];
 const LOADOPTS = ['Loading dependencies', 'Loading dependency', 'Executing', 'Compiling source code', 'Linking libraries', "Building"];
 const HEXOPTS = '0123456789abcdef';
-
-// FUNCTIONS
-
-function freeze(time: number) {
-    return new Promise(resolve => setTimeout(resolve, time));
-}
-
-function randNum(max: number) {
-    return Math.floor(Math.random() * max);
-}
-
-function toVariableName(inputStr: string) {
-    let ws = /\s|-|'/g;
-    return inputStr.toLowerCase().replace(ws, '_');
-}
 
 function generateRandomHex(numDigits: number) {
     let resultString = '';
@@ -78,23 +50,41 @@ function generateRandomHex(numDigits: number) {
     return resultString;
 }
 
-function colorStringRandom(inputString: string) {
-    return CODES[randNum(CODES.length)] + inputString + "\x1b[0m";
+function colorStringRandom(text: string) {
+    return CODES[randNum(CODES.length)] + text + "\x1b[0m";
 }
 
-// Function to get column values
-function getWords(tableName: string): string[] {
-    // Get the current module's file path
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = dirname(__filename);
+async function printLoadingBar() {
+    const loadingLength = MIN_LOAD_LEN + randNum(MAX_LOAD_LEN - MIN_LOAD_LEN + 1);
+    process.stdout.write(CODES[randNum(CODES.length)] + LOADOPTS[randNum(LOADOPTS.length)] + ': [');
+    const freezeTime = MIN_LOAD_DELAY + randNum(MAX_LOAD_DELAY - MIN_LOAD_DELAY + 1);
+    for (let i = 0; i < loadingLength; i++) {
+        process.stdout.write(LOADING_CHAR);
+        await freeze(freezeTime + (LOAD_TIME_SLOWDOWN * i));
+    }
+    process.stdout.write('] done!\n' + '\x1b[0m');
+}
 
-    const db = new Database(`${__dirname}/../tech_words.sqlite`, {});
-
-    const values: string[] = db.prepare(`SELECT value FROM ${tableName}`).all().map((obj: any) => obj.value)
-
-    // Close the database connection
-    db.close();
-    return values;
+async function printHexDump() {
+    console.log(colorStringRandom('Detecting system anomalies at memory address 0x' + generateRandomHex(MEM_ADDRESS_LENGTH) + '...'));
+    const numBlocks = MIN_HEX_BLOCKS + randNum(MAX_HEX_BLOCKS - MIN_HEX_BLOCKS + 1);
+    const fullHexLength = HEX_BLOCK_WIDTH * numBlocks + numBlocks;
+    for (let i = 0; i < HEX_BLOCK_HEIGHT; i++) {
+        for (let j = 0; j < fullHexLength; j++) {
+            if (j % (HEX_BLOCK_WIDTH + 1) == HEX_BLOCK_WIDTH) {
+                process.stdout.write("  ");
+            }
+            else if (Math.random() < HEX_COLOR_PROB) {
+                process.stdout.write(colorStringRandom(generateRandomHex(HEX_BYTE_LENGTH) + " "));
+            }
+            else {
+                process.stdout.write(generateRandomHex(HEX_BYTE_LENGTH) + " ");
+            }
+            await freeze(HEX_TIME_DELAY);
+        }
+        process.stdout.write('\n');
+    }
+    process.stdout.write('\n');
 }
 
 class Generator {
@@ -106,9 +96,7 @@ class Generator {
     LINES: number
 
     constructor() {
-        this.nouns = getWords("tech_nouns")
-        this.verbs = getWords("tech_verbs")
-        this.adjectives = getWords("tech_adjectives")
+        [this.nouns, this.verbs, this.adjectives] = loadWords()
 
         const parser = new argparse.ArgumentParser({ description: 'Generate tech jargon.' });
 
@@ -120,13 +108,13 @@ class Generator {
             required: false
         });
 
-        let args = parser.parse_args();
+        const args = parser.parse_args();
 
         this.LINES = args.lines;
     }
 
     generateTechJargon(): string {
-        let outerColor = CODES[randNum(CODES.length)];
+        const outerColor = CODES[randNum(CODES.length)];
         let returnString = this.adjectives[randNum(this.adjectives.length)] + " " + this.nouns[randNum(this.nouns.length)];
         if (Math.random() < CODE_PROB) {
             returnString = outerColor + this.verbs[randNum(this.verbs.length)] + " \x1b[0m" + colorStringRandom(toVariableName(returnString)) + outerColor + TRANSITIONS[randNum(TRANSITIONS.length)] + "\x1b[0m";
@@ -137,61 +125,34 @@ class Generator {
         return returnString;
     }
 
+    printTechJargon() {
+        const numLines = MIN_NUM_LINES + randNum(MAX_NUM_LINES - MIN_NUM_LINES + 1);
+        let printString = "";
+        for (let i = 0; i < numLines; i++) {
+            printString += this.generateTechJargon() + " ";
+        }
+
+        console.log(printString);
+    }
+
     async outputTechJargon() {
-
         for (let k = 0; k < this.LINES; k++) {
-
-            let roll = Math.random();
-
-            // Prints loading bar
+            const roll = Math.random();
             if (roll < LOADING_PROB) {
-                let loadingLength = MIN_LOAD_LEN + randNum(MAX_LOAD_LEN - MIN_LOAD_LEN + 1);
-                process.stdout.write(CODES[randNum(CODES.length)] + LOADOPTS[randNum(LOADOPTS.length)] + ': [');
-                let freezeTime = MIN_LOAD_DELAY + randNum(MAX_LOAD_DELAY - MIN_LOAD_DELAY + 1);
-                for (let i = 0; i < loadingLength; i++) {
-                    process.stdout.write(LOADING_CHAR);
-                    await freeze(freezeTime + (LOAD_TIME_SLOWDOWN * i));
-                }
-                process.stdout.write('] done!\n' + '\x1b[0m');
+                await printLoadingBar()
             }
             else if (roll < LOADING_PROB + OUT_HEX_PROB) {
-                console.log(colorStringRandom('Detecting system anomalies at memory address 0x' + generateRandomHex(MEM_ADDRESS_LENGTH) + '...'));
-                let numBlocks = MIN_HEX_BLOCKS + randNum(MAX_HEX_BLOCKS - MIN_HEX_BLOCKS + 1);
-                let fullHexLength = HEX_BLOCK_WIDTH * numBlocks + numBlocks;
-                for (let i = 0; i < HEX_BLOCK_HEIGHT; i++) {
-                    for (let j = 0; j < fullHexLength; j++) {
-                        if (j % (HEX_BLOCK_WIDTH + 1) == HEX_BLOCK_WIDTH) {
-                            process.stdout.write("  ");
-                        }
-                        else if (Math.random() < HEX_COLOR_PROB) {
-                            process.stdout.write(colorStringRandom(generateRandomHex(HEX_BYTE_LENGTH) + " "));
-                        }
-                        else {
-                            process.stdout.write(generateRandomHex(HEX_BYTE_LENGTH) + " ");
-                        }
-                        await freeze(HEX_TIME_DELAY);
-                    }
-                    process.stdout.write('\n');
-                }
-                process.stdout.write('\n');
+                await printHexDump()
             }
             else {
-                // Builds output string
-                let numLines = MIN_NUM_LINES + randNum(MAX_NUM_LINES - MIN_NUM_LINES + 1);
-                let printString = "";
-                for (let i = 0; i < numLines; i++) {
-                    printString += this.generateTechJargon() + " ";
-                }
-
-                // Prints output string
-                console.log(printString);
+                this.printTechJargon()
             }
             await freeze(MIN_MAIN_DELAY + randNum(MAX_MAIN_DELAY - MIN_MAIN_DELAY + 1));
         }
     }
 }
 
-let generator = new Generator();
+const generator = new Generator();
 
 generator.outputTechJargon()
 
