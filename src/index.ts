@@ -1,11 +1,8 @@
 #!/usr/bin/env node
-// Tech Jargon Generator
 
 import { loadWords } from './load.js';
 import { freeze, randNum, toVariableName } from './util.js';
 import argparse from 'argparse';
-
-// CONSTANTS
 
 // Time Delays
 const MIN_MAIN_DELAY = 1;
