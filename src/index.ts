@@ -2,6 +2,7 @@
 
 import { loadWords } from "./load.js";
 import { freeze, randNum, toVariableName } from "./util.js";
+import { CODES, TRANSITIONS, LOADOPTS, HEXOPTS } from "./constants.js";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 
@@ -25,38 +26,6 @@ const HEX_BLOCK_HEIGHT = 4; // The height of characters that each hex block will
 const HEX_BYTE_LENGTH = 4; // Number of characters that is printed out per byte of the hex table
 const MEM_ADDRESS_LENGTH = 8; // Number of characters that the memory address is in the output before hex table
 const LOADING_CHAR = "#"; // Character used to fill in the loading bar.
-
-// Random Text Generation Options
-const CODES = [
-  "\x1b[0m",
-  "\x1b[31m",
-  "\x1b[33m",
-  "\x1b[34m",
-  "\x1b[36m",
-  "\x1b[37m",
-];
-const TRANSITIONS = [
-  ": \x1b[1;32m== task complete ==\x1b[0m",
-  " =>",
-  " ==>",
-  ";",
-  "...",
-  ".",
-  " ->",
-  ":",
-  " ::",
-  " |",
-  " ~",
-];
-const LOADOPTS = [
-  "Loading dependencies",
-  "Loading dependency",
-  "Executing",
-  "Compiling source code",
-  "Linking libraries",
-  "Building",
-];
-const HEXOPTS = "0123456789abcdef";
 
 function generateRandomHex(numDigits: number) {
   let resultString = "";
