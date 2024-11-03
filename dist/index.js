@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-import { loadWords } from './load.js';
-import { freeze, randNum, toVariableName } from './util.js';
-import yargs from 'yargs';
-import { hideBin } from 'yargs/helpers';
+import { loadWords } from "./load.js";
+import { freeze, randNum, toVariableName } from "./util.js";
+import yargs from "yargs";
+import { hideBin } from "yargs/helpers";
 // Time Delays
 const MIN_MAIN_DELAY = 1;
 const MAX_MAIN_DELAY = 500;
@@ -11,10 +11,10 @@ const LOAD_TIME_SLOWDOWN = 3; // Determines how much loading bar delay increases
 const MIN_LOAD_DELAY = 1; // Determines minimum start time delay between each character of the loading bar
 const MAX_LOAD_DELAY = 150; // Determines maximum start time delay between each character of the loading bar
 // Probabilities
-const CODE_PROB = 0.50; // Probability that the adj + noun of a line is "codified"
-const LOADING_PROB = 0.10; // Probability that a loading bar is outputted
+const CODE_PROB = 0.5; // Probability that the adj + noun of a line is "codified"
+const LOADING_PROB = 0.1; // Probability that a loading bar is outputted
 const OUT_HEX_PROB = 0.01; // Probability that a table of hex values is outputted
-const HEX_COLOR_PROB = 0.20; // Probability that a hex byte in a hex table is colored
+const HEX_COLOR_PROB = 0.2; // Probability that a hex byte in a hex table is colored
 // Random generation boundaries
 const MIN_LOAD_LEN = 10; // Minimum length of characters that the loading bar can be
 const MAX_LOAD_LEN = 50; // Maximum length of characters that the loading bar can be
@@ -29,12 +29,38 @@ const HEX_BYTE_LENGTH = 4; // Number of characters that is printed out per byte 
 const MEM_ADDRESS_LENGTH = 8; // Number of characters that the memory address is in the output before hex table
 const LOADING_CHAR = "#"; // Character used to fill in the loading bar.
 // Random Text Generation Options
-const CODES = ["\x1b[0m", "\x1b[31m", "\x1b[33m", "\x1b[34m", "\x1b[36m", "\x1b[37m"];
-const TRANSITIONS = [': \x1b[1;32m== task complete ==\x1b[0m', ' =>', ' ==>', ';', '...', '.', ' ->', ':', ' ::', ' |', ' ~'];
-const LOADOPTS = ['Loading dependencies', 'Loading dependency', 'Executing', 'Compiling source code', 'Linking libraries', "Building"];
-const HEXOPTS = '0123456789abcdef';
+const CODES = [
+    "\x1b[0m",
+    "\x1b[31m",
+    "\x1b[33m",
+    "\x1b[34m",
+    "\x1b[36m",
+    "\x1b[37m",
+];
+const TRANSITIONS = [
+    ": \x1b[1;32m== task complete ==\x1b[0m",
+    " =>",
+    " ==>",
+    ";",
+    "...",
+    ".",
+    " ->",
+    ":",
+    " ::",
+    " |",
+    " ~",
+];
+const LOADOPTS = [
+    "Loading dependencies",
+    "Loading dependency",
+    "Executing",
+    "Compiling source code",
+    "Linking libraries",
+    "Building",
+];
+const HEXOPTS = "0123456789abcdef";
 function generateRandomHex(numDigits) {
-    let resultString = '';
+    let resultString = "";
     for (let h = 0; h < numDigits; h++) {
         resultString += HEXOPTS[randNum(HEXOPTS.length)];
     }
@@ -48,16 +74,18 @@ function colorStringRandom(text) {
 }
 async function printLoadingBar() {
     const loadingLength = MIN_LOAD_LEN + randNum(MAX_LOAD_LEN - MIN_LOAD_LEN + 1);
-    process.stdout.write(randColor() + LOADOPTS[randNum(LOADOPTS.length)] + ': [');
+    process.stdout.write(randColor() + LOADOPTS[randNum(LOADOPTS.length)] + ": [");
     const freezeTime = MIN_LOAD_DELAY + randNum(MAX_LOAD_DELAY - MIN_LOAD_DELAY + 1);
     for (let i = 0; i < loadingLength; i++) {
         process.stdout.write(LOADING_CHAR);
-        await freeze(freezeTime + (LOAD_TIME_SLOWDOWN * i));
+        await freeze(freezeTime + LOAD_TIME_SLOWDOWN * i);
     }
-    process.stdout.write('] done!\n' + '\x1b[0m');
+    process.stdout.write("] done!\n" + "\x1b[0m");
 }
 async function printHexDump() {
-    console.log(colorStringRandom('Detecting system anomalies at memory address 0x' + generateRandomHex(MEM_ADDRESS_LENGTH) + '...'));
+    console.log(colorStringRandom("Detecting system anomalies at memory address 0x" +
+        generateRandomHex(MEM_ADDRESS_LENGTH) +
+        "..."));
     const numBlocks = MIN_HEX_BLOCKS + randNum(MAX_HEX_BLOCKS - MIN_HEX_BLOCKS + 1);
     const fullHexLength = HEX_BLOCK_WIDTH * numBlocks + numBlocks;
     for (let i = 0; i < HEX_BLOCK_HEIGHT; i++) {
@@ -73,9 +101,9 @@ async function printHexDump() {
             }
             await freeze(HEX_TIME_DELAY);
         }
-        process.stdout.write('\n');
+        process.stdout.write("\n");
     }
-    process.stdout.write('\n');
+    process.stdout.write("\n");
 }
 class Generator {
     nouns;
@@ -91,25 +119,40 @@ class Generator {
         const argv = yargs(hideBin(process.argv))
             .options({
             l: {
-                type: 'number',
+                type: "number",
                 default: 1000,
-                alias: 'lines',
-                describe: 'Number of lines to generate'
+                alias: "lines",
+                describe: "Number of lines to generate",
             },
         })
-            .help('h')
-            .alias('h', 'help')
+            .help("h")
+            .alias("h", "help")
             .parseSync();
         this.LINES = argv.l;
     }
     generateTechJargon() {
         const outerColor = randColor();
-        let returnString = this.adjectives[randNum(this.adjectives.length)] + " " + this.nouns[randNum(this.nouns.length)];
+        let returnString = this.adjectives[randNum(this.adjectives.length)] +
+            " " +
+            this.nouns[randNum(this.nouns.length)];
         if (Math.random() < CODE_PROB) {
-            returnString = outerColor + this.verbs[randNum(this.verbs.length)] + " \x1b[0m" + colorStringRandom(toVariableName(returnString)) + outerColor + TRANSITIONS[randNum(TRANSITIONS.length)] + "\x1b[0m";
+            returnString =
+                outerColor +
+                    this.verbs[randNum(this.verbs.length)] +
+                    " \x1b[0m" +
+                    colorStringRandom(toVariableName(returnString)) +
+                    outerColor +
+                    TRANSITIONS[randNum(TRANSITIONS.length)] +
+                    "\x1b[0m";
         }
         else {
-            returnString = outerColor + this.verbs[randNum(this.verbs.length)] + " " + returnString + TRANSITIONS[randNum(TRANSITIONS.length)] + "\x1b[0m";
+            returnString =
+                outerColor +
+                    this.verbs[randNum(this.verbs.length)] +
+                    " " +
+                    returnString +
+                    TRANSITIONS[randNum(TRANSITIONS.length)] +
+                    "\x1b[0m";
         }
         return returnString;
     }
