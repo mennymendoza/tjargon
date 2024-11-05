@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { loadWords } from "./load.js";
 import { freeze, randNum, toVariableName } from "./util.js";
+import { CODES, TRANSITIONS, LOADOPTS, HEXOPTS } from "./constants.js";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 // Time Delays
@@ -15,50 +16,12 @@ const CODE_PROB = 0.5; // Probability that the adj + noun of a line is "codified
 const LOADING_PROB = 0.1; // Probability that a loading bar is outputted
 const OUT_HEX_PROB = 0.01; // Probability that a table of hex values is outputted
 const HEX_COLOR_PROB = 0.2; // Probability that a hex byte in a hex table is colored
-// Random generation boundaries
-const MIN_LOAD_LEN = 10; // Minimum length of characters that the loading bar can be
-const MAX_LOAD_LEN = 50; // Maximum length of characters that the loading bar can be
-const MIN_HEX_BLOCKS = 2; // Minimum number of hex blocks generated
-const MAX_HEX_BLOCKS = 4; // Maximum number of hex blocks generated
-const MIN_NUM_LINES = 1; // Minimum number of tech jargon lines generated per output line
-const MAX_NUM_LINES = 3; // Maximum number of tech jargon lines generated per output line
 // MISC
 const HEX_BLOCK_WIDTH = 4; // The length of characters that each hex block will be when outputted
 const HEX_BLOCK_HEIGHT = 4; // The height of characters that each hex block will be when outputted
 const HEX_BYTE_LENGTH = 4; // Number of characters that is printed out per byte of the hex table
 const MEM_ADDRESS_LENGTH = 8; // Number of characters that the memory address is in the output before hex table
 const LOADING_CHAR = "#"; // Character used to fill in the loading bar.
-// Random Text Generation Options
-const CODES = [
-    "\x1b[0m",
-    "\x1b[31m",
-    "\x1b[33m",
-    "\x1b[34m",
-    "\x1b[36m",
-    "\x1b[37m",
-];
-const TRANSITIONS = [
-    ": \x1b[1;32m== task complete ==\x1b[0m",
-    " =>",
-    " ==>",
-    ";",
-    "...",
-    ".",
-    " ->",
-    ":",
-    " ::",
-    " |",
-    " ~",
-];
-const LOADOPTS = [
-    "Loading dependencies",
-    "Loading dependency",
-    "Executing",
-    "Compiling source code",
-    "Linking libraries",
-    "Building",
-];
-const HEXOPTS = "0123456789abcdef";
 function generateRandomHex(numDigits) {
     let resultString = "";
     for (let h = 0; h < numDigits; h++) {
@@ -72,45 +35,18 @@ function randColor() {
 function colorStringRandom(text) {
     return randColor() + text + "\x1b[0m";
 }
-async function printLoadingBar() {
-    const loadingLength = MIN_LOAD_LEN + randNum(MAX_LOAD_LEN - MIN_LOAD_LEN + 1);
-    process.stdout.write(randColor() + LOADOPTS[randNum(LOADOPTS.length)] + ": [");
-    const freezeTime = MIN_LOAD_DELAY + randNum(MAX_LOAD_DELAY - MIN_LOAD_DELAY + 1);
-    for (let i = 0; i < loadingLength; i++) {
-        process.stdout.write(LOADING_CHAR);
-        await freeze(freezeTime + LOAD_TIME_SLOWDOWN * i);
-    }
-    process.stdout.write("] done!\n" + "\x1b[0m");
-}
-async function printHexDump() {
-    console.log(colorStringRandom("Detecting system anomalies at memory address 0x" +
-        generateRandomHex(MEM_ADDRESS_LENGTH) +
-        "..."));
-    const numBlocks = MIN_HEX_BLOCKS + randNum(MAX_HEX_BLOCKS - MIN_HEX_BLOCKS + 1);
-    const fullHexLength = HEX_BLOCK_WIDTH * numBlocks + numBlocks;
-    for (let i = 0; i < HEX_BLOCK_HEIGHT; i++) {
-        for (let j = 0; j < fullHexLength; j++) {
-            if (j % (HEX_BLOCK_WIDTH + 1) == HEX_BLOCK_WIDTH) {
-                process.stdout.write("  ");
-            }
-            else if (Math.random() < HEX_COLOR_PROB) {
-                process.stdout.write(colorStringRandom(generateRandomHex(HEX_BYTE_LENGTH) + " "));
-            }
-            else {
-                process.stdout.write(generateRandomHex(HEX_BYTE_LENGTH) + " ");
-            }
-            await freeze(HEX_TIME_DELAY);
-        }
-        process.stdout.write("\n");
-    }
-    process.stdout.write("\n");
-}
 class Generator {
     nouns;
     verbs;
     adjectives;
     // Configs
     LINES;
+    MIN_NUM_LINES;
+    MAX_NUM_LINES;
+    MAX_HEX_BLOCKS;
+    MIN_HEX_BLOCKS;
+    MIN_LOAD_LEN;
+    MAX_LOAD_LEN;
     constructor() {
         const { nouns, verbs, adjectives } = loadWords();
         this.nouns = nouns;
@@ -118,17 +54,87 @@ class Generator {
         this.adjectives = adjectives;
         const argv = yargs(hideBin(process.argv))
             .options({
-            l: {
+            lines: {
                 type: "number",
                 default: 1000,
-                alias: "lines",
+                alias: "l",
                 describe: "Number of lines to generate",
+            },
+            "min-line-width": {
+                type: "number",
+                default: 1,
+                describe: "Minimum number of tech jargon lines generated per output line",
+            },
+            "max-line-width": {
+                type: "number",
+                default: 3,
+                describe: "Maximum number of tech jargon lines generated per output line",
+            },
+            "min-hex-blocks": {
+                type: "number",
+                default: 2,
+                describe: "Minimum number of hex blocks generated",
+            },
+            "max-hex-blocks": {
+                type: "number",
+                default: 4,
+                describe: "Maximum number of hex blocks generated",
+            },
+            "min-load-length": {
+                type: "number",
+                default: 2,
+                describe: "Minimum length of characters that the loading bar can be",
+            },
+            "max-load-length": {
+                type: "number",
+                default: 2,
+                describe: "Maximum length of characters that the loading bar can be",
             },
         })
             .help("h")
             .alias("h", "help")
             .parseSync();
-        this.LINES = argv.l;
+        this.LINES = argv.lines;
+        this.MIN_NUM_LINES = argv["min-line-width"];
+        this.MAX_NUM_LINES = argv["max-line-width"];
+        this.MIN_HEX_BLOCKS = argv["min-hex-blocks"];
+        this.MAX_HEX_BLOCKS = argv["max-hex-blocks"];
+        this.MIN_LOAD_LEN = argv["min-load-length"];
+        this.MAX_LOAD_LEN = argv["max-load-length"];
+    }
+    async printLoadingBar() {
+        const loadingLength = this.MIN_LOAD_LEN + randNum(this.MAX_LOAD_LEN - this.MIN_LOAD_LEN + 1);
+        process.stdout.write(randColor() + LOADOPTS[randNum(LOADOPTS.length)] + ": [");
+        const freezeTime = MIN_LOAD_DELAY + randNum(MAX_LOAD_DELAY - MIN_LOAD_DELAY + 1);
+        for (let i = 0; i < loadingLength; i++) {
+            process.stdout.write(LOADING_CHAR);
+            await freeze(freezeTime + LOAD_TIME_SLOWDOWN * i);
+        }
+        process.stdout.write("] done!\n" + "\x1b[0m");
+    }
+    async printHexDump() {
+        console.log(colorStringRandom("Detecting system anomalies at memory address 0x" +
+            generateRandomHex(MEM_ADDRESS_LENGTH) +
+            "..."));
+        const numBlocks = this.MIN_HEX_BLOCKS +
+            randNum(this.MAX_HEX_BLOCKS - this.MIN_HEX_BLOCKS + 1);
+        const fullHexLength = HEX_BLOCK_WIDTH * numBlocks + numBlocks;
+        for (let i = 0; i < HEX_BLOCK_HEIGHT; i++) {
+            for (let j = 0; j < fullHexLength; j++) {
+                if (j % (HEX_BLOCK_WIDTH + 1) == HEX_BLOCK_WIDTH) {
+                    process.stdout.write("  ");
+                }
+                else if (Math.random() < HEX_COLOR_PROB) {
+                    process.stdout.write(colorStringRandom(generateRandomHex(HEX_BYTE_LENGTH) + " "));
+                }
+                else {
+                    process.stdout.write(generateRandomHex(HEX_BYTE_LENGTH) + " ");
+                }
+                await freeze(HEX_TIME_DELAY);
+            }
+            process.stdout.write("\n");
+        }
+        process.stdout.write("\n");
     }
     generateTechJargon() {
         const outerColor = randColor();
@@ -157,7 +163,7 @@ class Generator {
         return returnString;
     }
     printTechJargon() {
-        const numLines = MIN_NUM_LINES + randNum(MAX_NUM_LINES - MIN_NUM_LINES + 1);
+        const numLines = this.MIN_NUM_LINES + randNum(this.MAX_NUM_LINES - this.MIN_NUM_LINES + 1);
         let printString = "";
         for (let i = 0; i < numLines; i++) {
             printString += this.generateTechJargon() + " ";
@@ -168,10 +174,10 @@ class Generator {
         for (let k = 0; k < this.LINES; k++) {
             const roll = Math.random();
             if (roll < LOADING_PROB) {
-                await printLoadingBar();
+                await this.printLoadingBar();
             }
             else if (roll < LOADING_PROB + OUT_HEX_PROB) {
-                await printHexDump();
+                await this.printHexDump();
             }
             else {
                 this.printTechJargon();
