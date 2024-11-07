@@ -160,6 +160,7 @@ class Generator {
       returnString =
         outerColor +
         this.verbs[randNum(this.verbs.length)] +
+        " " +
         RESET_COLOR +
         colorStringRandom(toVariableName(returnString)) +
         outerColor +
