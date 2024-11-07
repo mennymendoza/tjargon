@@ -2,7 +2,13 @@
 
 import { loadWords } from "./load.js";
 import { freeze, randNum, toVariableName } from "./util.js";
-import { COLORS, TRANSITIONS, LOADOPTS, HEXOPTS, RESET_COLOR } from "./constants.js";
+import {
+  TRANSITIONS,
+  LOADOPTS,
+  RESET_COLOR,
+  LOADING_CHAR,
+} from "./constants.js";
+import { generateRandomHex, randColor, colorStringRandom } from "./helpers.js";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 
@@ -25,23 +31,6 @@ const HEX_BLOCK_WIDTH = 4; // The length of characters that each hex block will 
 const HEX_BLOCK_HEIGHT = 4; // The height of characters that each hex block will be when outputted
 const HEX_BYTE_LENGTH = 4; // Number of characters that is printed out per byte of the hex table
 const MEM_ADDRESS_LENGTH = 8; // Number of characters that the memory address is in the output before hex table
-const LOADING_CHAR = "#"; // Character used to fill in the loading bar.
-
-function generateRandomHex(numDigits: number) {
-  let resultString = "";
-  for (let h = 0; h < numDigits; h++) {
-    resultString += HEXOPTS[randNum(HEXOPTS.length)];
-  }
-  return resultString;
-}
-
-function randColor(): string {
-  return COLORS[randNum(COLORS.length)]!;
-}
-
-function colorStringRandom(text: string) {
-  return randColor() + text + RESET_COLOR;
-}
 
 class Generator {
   nouns: string[];

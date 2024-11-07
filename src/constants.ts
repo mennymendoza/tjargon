@@ -30,3 +30,4 @@ export const LOADOPTS = [
   "Building",
 ];
 export const HEXOPTS = "0123456789abcdef";
+export const LOADING_CHAR = "#";
