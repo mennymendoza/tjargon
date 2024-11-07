@@ -129,7 +129,7 @@ class Generator {
       process.stdout.write(LOADING_CHAR);
       await freeze(freezeTime + LOAD_TIME_SLOWDOWN * i);
     }
-    process.stdout.write("] done!\n" + "\x1b[0m");
+    process.stdout.write("] done!\n" + RESET_COLOR);
   }
   async printHexDump() {
     console.log(
@@ -171,11 +171,11 @@ class Generator {
       returnString =
         outerColor +
         this.verbs[randNum(this.verbs.length)] +
-        " \x1b[0m" +
+        RESET_COLOR +
         colorStringRandom(toVariableName(returnString)) +
         outerColor +
         TRANSITIONS[randNum(TRANSITIONS.length)] +
-        "\x1b[0m";
+        RESET_COLOR;
     } else {
       returnString =
         outerColor +
@@ -183,7 +183,7 @@ class Generator {
         " " +
         returnString +
         TRANSITIONS[randNum(TRANSITIONS.length)] +
-        "\x1b[0m";
+        RESET_COLOR;
     }
     return returnString;
   }
