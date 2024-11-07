@@ -2,7 +2,7 @@
 
 import { loadWords } from "./load.js";
 import { freeze, randNum, toVariableName } from "./util.js";
-import { CODES, TRANSITIONS, LOADOPTS, HEXOPTS } from "./constants.js";
+import { COLORS, TRANSITIONS, LOADOPTS, HEXOPTS, RESET_COLOR } from "./constants.js";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 
@@ -36,11 +36,11 @@ function generateRandomHex(numDigits: number) {
 }
 
 function randColor(): string {
-  return CODES[randNum(CODES.length)]!;
+  return COLORS[randNum(COLORS.length)]!;
 }
 
 function colorStringRandom(text: string) {
-  return randColor() + text + "\x1b[0m";
+  return randColor() + text + RESET_COLOR;
 }
 
 class Generator {

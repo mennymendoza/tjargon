@@ -1,5 +1,5 @@
 // Random Text Generation Options
-export const CODES = [
+export const COLORS = [
   "\x1b[0m",
   "\x1b[31m",
   "\x1b[33m",
@@ -7,6 +7,7 @@ export const CODES = [
   "\x1b[36m",
   "\x1b[37m",
 ];
+export const RESET_COLOR = "\x1b[0m";
 export const TRANSITIONS = [
   ": \x1b[1;32m== task complete ==\x1b[0m",
   " =>",
