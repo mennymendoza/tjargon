@@ -100,8 +100,8 @@ async function printHexDump() {
   console.log(
     colorStringRandom(
       "Detecting system anomalies at memory address 0x" +
-        generateRandomHex(MEM_ADDRESS_LENGTH) +
-        "..."
+      generateRandomHex(MEM_ADDRESS_LENGTH) +
+      "..."
     )
   );
   const numBlocks =
