@@ -22,18 +22,18 @@
     "tjargon": "dist/index.js"
   },
   "devDependencies": {
-    "@eslint/js": "^9.13.0",
+    "@eslint/js": "^9.23.0",
     "@tsconfig/node16": "^16.1.3",
-    "@types/better-sqlite3": "^7.6.11",
+    "@types/better-sqlite3": "^7.6.12",
     "@types/yargs": "^17.0.33",
-    "eslint": "^9.13.0",
-    "globals": "^15.11.0",
-    "prettier": "3.3.3",
-    "typescript": "^5.6.2",
-    "typescript-eslint": "^8.11.0"
+    "eslint": "^9.23.0",
+    "globals": "^16.0.0",
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.2",
+    "typescript-eslint": "^8.29.0"
   },
   "dependencies": {
-    "better-sqlite3": "^11.3.0",
+    "better-sqlite3": "^11.9.1",
     "yargs": "^17.7.2"
   }
 }
